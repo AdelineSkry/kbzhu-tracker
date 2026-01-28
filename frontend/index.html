@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КБЖУ-Трекер</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Главный контейнер приложения -->
+    <div class="container">
+        <!-- Заголовок -->
+        <header>
+            <h1>КБЖУ-Трекер</h1>
+            <p class="subtitle">Загрузите фото еды для анализа питательной ценности</p>
+        </header>
+
+        <!-- Форма загрузки фото -->
+        <section class="upload-section">
+            <label for="photo-input" class="upload-label">
+                <span class="upload-icon">📷</span>
+                <span class="upload-text">Выберите фото или перетащите сюда</span>
+            </label>
+            <input type="file" id="photo-input" accept="image/*" hidden>
+        </section>
+
+        <!-- Область предпросмотра изображения -->
+        <section class="preview-section" id="preview-section" hidden>
+            <img id="preview-image" alt="Предпросмотр фото">
+            <button id="remove-btn" class="btn-secondary">Удалить фото</button>
+        </section>
+
+        <!-- Кнопка анализа -->
+        <button id="analyze-btn" class="btn-primary" disabled>
+            Анализировать
+        </button>
+
+        <!-- Область результатов анализа -->
+        <section class="result-section" id="result-section" hidden>
+            <h2>Результаты анализа</h2>
+
+            <!-- Название блюда -->
+            <div class="dish-name" id="dish-name"></div>
+
+            <!-- Таблица КБЖУ -->
+            <div class="nutrition-grid">
+                <div class="nutrition-item">
+                    <span class="nutrition-value" id="calories">—</span>
+                    <span class="nutrition-label">Калории</span>
+                </div>
+                <div class="nutrition-item">
+                    <span class="nutrition-value" id="proteins">—</span>
+                    <span class="nutrition-label">Белки (г)</span>
+                </div>
+                <div class="nutrition-item">
+                    <span class="nutrition-value" id="fats">—</span>
+                    <span class="nutrition-label">Жиры (г)</span>
+                </div>
+                <div class="nutrition-item">
+                    <span class="nutrition-value" id="carbs">—</span>
+                    <span class="nutrition-label">Углеводы (г)</span>
+                </div>
+            </div>
+
+            <!-- Дополнительная информация -->
+            <div class="additional-info" id="additional-info"></div>
+        </section>
+
+        <!-- Индикатор загрузки -->
+        <div class="loader" id="loader" hidden>
+            <div class="spinner"></div>
+            <p>Анализируем изображение...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
