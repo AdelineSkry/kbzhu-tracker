@@ -1,7 +1,13 @@
 /**
  * КБЖУ-Трекер - Главный скрипт приложения
- * Функционал: загрузка фото, предпросмотр, анализ (заглушка)
+ * Функционал: загрузка фото, предпросмотр, анализ через OpenAI GPT-4 Vision
  */
+
+// ========================================
+// Конфигурация API
+// ========================================
+
+const API_URL = 'http://localhost:5000';
 
 // ========================================
 // Получение элементов DOM
@@ -149,8 +155,7 @@ function removePhoto() {
 // ========================================
 
 /**
- * Запуск анализа фото (заглушка)
- * В будущем здесь будет вызов API Claude
+ * Запуск анализа фото через бэкенд API
  */
 async function analyzePhoto() {
     if (!selectedFile) return;
@@ -161,17 +166,14 @@ async function analyzePhoto() {
     resultSection.hidden = true;
 
     try {
-        // Имитация задержки API-запроса (заглушка)
-        await simulateApiCall();
-
-        // Получаем данные заглушки
-        const mockData = getMockAnalysisResult();
+        // Отправляем изображение на бэкенд
+        const result = await sendToApi(selectedFile);
 
         // Отображаем результаты
-        displayResults(mockData);
+        displayResults(result);
     } catch (error) {
         console.error('Ошибка анализа:', error);
-        alert('Произошла ошибка при анализе изображения');
+        alert(error.message || 'Произошла ошибка при анализе изображения');
     } finally {
         // Скрываем индикатор загрузки
         loader.hidden = true;
@@ -180,86 +182,68 @@ async function analyzePhoto() {
 }
 
 /**
- * Имитация задержки API-запроса
- * @returns {Promise} - промис с задержкой
- */
-function simulateApiCall() {
-    return new Promise(resolve => setTimeout(resolve, 1500));
-}
-
-/**
- * Получить данные заглушки для результатов анализа
- * @returns {Object} - объект с данными КБЖУ
- */
-function getMockAnalysisResult() {
-    // Заглушка - в будущем здесь будут реальные данные от Claude API
-    const mockResults = [
-        {
-            name: 'Греческий салат',
-            calories: 180,
-            proteins: 5,
-            fats: 14,
-            carbs: 9,
-            info: 'Примерная порция: 250г'
-        },
-        {
-            name: 'Куриная грудка с рисом',
-            calories: 420,
-            proteins: 35,
-            fats: 8,
-            carbs: 52,
-            info: 'Примерная порция: 350г'
-        },
-        {
-            name: 'Овсяная каша с фруктами',
-            calories: 280,
-            proteins: 8,
-            fats: 6,
-            carbs: 48,
-            info: 'Примерная порция: 300г'
-        }
-    ];
-
-    // Возвращаем случайный результат для демонстрации
-    const randomIndex = Math.floor(Math.random() * mockResults.length);
-    return mockResults[randomIndex];
-}
-
-/**
  * Отобразить результаты анализа
- * @param {Object} data - данные анализа
+ * @param {Object} data - данные анализа от API
  */
 function displayResults(data) {
-    dishName.textContent = data.name;
-    calories.textContent = data.calories;
-    proteins.textContent = data.proteins;
-    fats.textContent = data.fats;
-    carbs.textContent = data.carbs;
-    additionalInfo.textContent = data.info;
+    dishName.textContent = data.product_name || 'Неизвестный продукт';
+    calories.textContent = data.calories || '—';
+    proteins.textContent = data.proteins || '—';
+    fats.textContent = data.fats || '—';
+    carbs.textContent = data.carbs || '—';
 
+    // Формируем дополнительную информацию
+    const infoParts = [];
+    if (data.weight) {
+        infoParts.push(`Порция: ~${data.weight}г`);
+    }
+    if (data.confidence) {
+        const confidenceMap = {
+            high: 'Высокая точность',
+            medium: 'Средняя точность',
+            low: 'Низкая точность'
+        };
+        infoParts.push(confidenceMap[data.confidence] || '');
+    }
+    if (data.notes) {
+        infoParts.push(data.notes);
+    }
+
+    additionalInfo.textContent = infoParts.join(' • ');
     resultSection.hidden = false;
 }
 
 // ========================================
-// TODO: Интеграция с бэкендом
+// Интеграция с бэкендом
 // ========================================
 
 /**
- * Будущая функция для отправки фото на сервер
+ * Отправка фото на сервер для анализа КБЖУ
  * @param {File} file - файл изображения
  * @returns {Promise<Object>} - результат анализа от API
  */
 async function sendToApi(file) {
-    // TODO: Реализовать отправку на бэкенд
-    // const formData = new FormData();
-    // formData.append('photo', file);
-    //
-    // const response = await fetch('/api/analyze', {
-    //     method: 'POST',
-    //     body: formData
-    // });
-    //
-    // return response.json();
+    // Создаём FormData для отправки файла
+    const formData = new FormData();
+    formData.append('image', file);
 
-    throw new Error('API ещё не реализован');
+    // Отправляем запрос на бэкенд
+    const response = await fetch(`${API_URL}/analyze`, {
+        method: 'POST',
+        body: formData
+    });
+
+    // Парсим JSON ответ
+    const result = await response.json();
+
+    // Проверяем на ошибки
+    if (!response.ok) {
+        throw new Error(result.message || result.error || 'Ошибка сервера');
+    }
+
+    if (!result.success) {
+        throw new Error(result.message || 'Не удалось проанализировать изображение');
+    }
+
+    return result.data;
 }
